@@ -1,0 +1,21 @@
+export const USER_STATUS_OPTIONS = ['ACTIVE', 'INACTIVE', 'DELETED']
+export const PRODUCT_STATUS_OPTIONS = ['ACTIVE', 'INACTIVE', 'DELETED']
+export const ORDER_STATUS = [
+    'ORDER_PLACED',
+    'ORDER_ACCEPTED',
+    'ORDER_CANCELLED',
+    'ORDER_DELIVERED',
+    'ORDER_DISPATCHED',
+]
+
+export const PAYMENT_MODE = [
+    'RAZORPAY',
+    'STRIPE',
+    'POD'
+]
+
+export const PAYMENT_STATUS = [
+    'COMPLETED',
+    'PENDING'
+]
+
