@@ -9,7 +9,7 @@ const authenticate = async (req, res, next) => {
         const { token } = req.headers;
 
         if (!token) {
-            const error = await errorResponse(409, 'Token Not Found!');
+            const error = await errorResponse(401, 'Unauthorized Request!');
             throw error;
         }
 
@@ -19,7 +19,7 @@ const authenticate = async (req, res, next) => {
             req.body.userId = decoded.id;
             next();
         } else {
-            const error = await errorResponse(409, 'Invalid User!');
+            const error = await errorResponse(401, 'Unauthorized Request!');
             throw error;
         }
 

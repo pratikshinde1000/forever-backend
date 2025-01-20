@@ -3,6 +3,7 @@ import userModel from "../models/userModel.js";
 import errorResponse from "../middlewares/errorResponse.js";
 import mongoose from "mongoose";
 import razorpay from 'razorpay';
+import { PAYMENT_STATUS } from "../config/constant.js";
 
 const currency = process.env.CURRENCY;
 
@@ -50,7 +51,7 @@ export const createOrder = async (req, res, next) => {
 
         if(paymentMode === 'RAZORPAY'){
             const options = {
-                amount: amount * 100,
+                amount: cartAmount * 100,
                 currency: currency.toUpperCase(),
                 receipt: order.order_no
             }
@@ -60,7 +61,8 @@ export const createOrder = async (req, res, next) => {
                     console.log('error', error);
                     return res.status(409).json({ success: false, error: 'Failed to generate Order.'})
                 }
-                return res.status({ success: true, message: 'Order Placed', data: order, razorpay_data: razopay_order })
+                console.log('razorpay', razopay_order);
+                return res.status(200).json({ success: true, message: 'Order Placed', data: order, razorpay_data: razopay_order })
             })
 
         }else{
@@ -72,10 +74,34 @@ export const createOrder = async (req, res, next) => {
     }
 }
 
+export const verifyRazorpay = async (req, res, next) => {
+    try {
+        const {  razorpay_order_id, userId } = req.body;
+        console.log('razorpay_order_id', razorpay_order_id);
+
+        const orderInfo = await razorpayIstance.orders.fetch(razorpay_order_id);
+
+        // console.log('orderrIfo', orderInfo);
+        if(orderInfo?.status === 'paid'){
+            await orderModel.updateOne({order_no: orderInfo?.receipt },{ $set: { paymentStatus: PAYMENT_STATUS[0] } })
+            await userModel.updateOne({ _id: userId }, { $set: { cartData: [] } });
+            return res.status(200).json({ success: true })
+        }else{
+            const error = errorResponse(409, 'Payment Failed');
+            throw error;
+        }
+
+    } catch (error) {
+        console.log('verifyRazorpay error', error);
+        next(error)
+    }
+}
+
 export const getOrders = async (req, res, next) => {
     try {
         const userId = mongoose.Types.ObjectId.createFromHexString(req.body.userId);
         
+
         const orders = await orderModel.aggregate([
             { $match: { userId: userId } },
             { $unwind: { path: '$cartData' } },
@@ -118,14 +144,18 @@ export const getOrders = async (req, res, next) => {
                 $replaceRoot: {
                     newRoot: '$orderDetails'
                 }
-            }
+            },
+            { $sort: { createdAt: -1 }  }
         ])
+
+
         return res.status(200).json({ success: true, count: orders.length, data: orders });
     } catch (error) {
-        console.log('error', error);
         next(error);
     }
 }
+
+
 
 export const updateOrderStatus = async (req, res, next) => {
     try {
@@ -183,7 +213,8 @@ export const getAllOrders = async (req, res, next) => {
                 $replaceRoot: {
                     newRoot: '$orderDetails'
                 }
-            }
+            },
+            { $sort: { createdAt: -1 }  }
         ])
 
         return res.status(200).json({ success: true, count: orders.length, data: orders });
