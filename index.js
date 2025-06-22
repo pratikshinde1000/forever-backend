@@ -8,9 +8,7 @@ import productRoutes from './routes/productRoutes.js';
 import cartRouter from './routes/cartRoutes.js';
 import errorHandler from './middlewares/errorHandler.js';
 import morgan from 'morgan';
-import dns from "node:dns/promises";
 import orderRouter from './routes/orderRoutes.js';
-dns.setServers(["1.1.1.1"]);
 
 
 const app = expres();
